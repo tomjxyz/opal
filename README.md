@@ -1,7 +1,13 @@
 # Opal
 
-An AI assistant for BlackBerry 10, designed for the BlackBerry Classic. Ask a question by typing, or
-point the camera at something and ask about it.
+An AI assistant for BlackBerry 10, designed for the BlackBerry Classic as a replacement for Google Lens.
+Ask a question by typing, or point the camera at something and ask about it.
+
+## Screenshots
+
+| Home | Camera search | Answer |
+|:---:|:---:|:---:|
+| <img src="screenshots/home.jpg" width="240" alt="Home screen with the ask field and recent chats"> | <img src="screenshots/camera.jpg" width="240" alt="Camera search viewfinder"> | <img src="screenshots/response.jpg" width="240" alt="A formatted answer"> |
 
 ## Features
 
