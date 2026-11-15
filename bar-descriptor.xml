@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<qnx xmlns="http://www.qnx.com/schemas/application/1.0">
+    <id>com.example.opal</id>
+    <name>Opal</name>
+    <versionNumber>1.0.0</versionNumber>
+    <buildId>1</buildId>
+    <description>Ask anything, or point the camera at it</description>
+    <author>Opal</author>
+    <initialWindow>
+        <autoOrients>false</autoOrients>
+        <aspectRatio>portrait</aspectRatio>
+        <systemChrome>none</systemChrome>
+    </initialWindow>
+    <icon><image>icon.png</image></icon>
+    <asset path="icon.png">icon.png</asset>
+    <asset path="assets">assets</asset>
+    <!-- one configuration per CPU: `make` = Device-Release (phone), `make sim` = Simulator (x86) -->
+    <configuration name="Device-Release">
+        <platformArchitecture>armle-v7</platformArchitecture>
+        <asset path="arm/Opal" entry="true" type="Qnx/Elf">Opal</asset>
+    </configuration>
+    <configuration name="Simulator">
+        <platformArchitecture>x86</platformArchitecture>
+        <asset path="x86/Opal" entry="true" type="Qnx/Elf">Opal</asset>
+    </configuration>
+    <permission system="true">run_native</permission>
+    <permission>access_internet</permission>
+    <permission>use_camera</permission>
+    <permission>access_shared</permission>
+    <env var="LD_LIBRARY_PATH" value="app/native/lib:/usr/lib/qt4/lib"/>
+    <!-- dark theme + Opal's purple as the brand colour: system accents (DropDown, switches,
+         checkboxes, text cursor) use it instead of BlackBerry blue -->
+    <env var="CASCADES_THEME" value="dark?primaryColor=0x6B52A8&amp;primaryBase=0x4E3B80"/>
+</qnx>

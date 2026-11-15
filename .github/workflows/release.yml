@@ -1,0 +1,81 @@
+# Release Opal from a version tag (git tag v1.0.1 && git push origin v1.0.1).
+#
+# Builds inside the bb10-sdk image (BlackBerry Native SDK 10.3.1 + GCC 5.4 built from source),
+# checks that the build reproduces, then publishes the .bars with SHA256SUMS and a signed
+# build-provenance attestation. See README.md for how to verify a release.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read            # pull the image if the package is private
+    container:
+      # Pin by digest so every release names exactly which toolchain built it.
+      # Pinned by digest: the exact image that builds (and verifies) every release.
+      image: ghcr.io/tomjxyz/bb10-sdk:10.3.1@sha256:7ddca3c5d11927bae1ff3077046de247d62a975b8f30531e7555cf23f35f34de
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trust the checkout (container user differs from the checkout's owner)
+        run: git config --global --add safe.directory '*'
+
+      - name: Build (phone + simulator)
+        run: make both
+
+      - name: Static checks
+        run: check-bar.sh .
+
+      - name: Reproducibility check (rebuild from a fresh clone elsewhere and compare)
+        run: |
+          verify-bar.sh Opal.bar     "$GITHUB_WORKSPACE" "$GITHUB_SHA"
+          verify-bar.sh Opal-sim.bar "$GITHUB_WORKSPACE" "$GITHUB_SHA"
+
+      - name: Checksums
+        run: sha256sum Opal.bar Opal-sim.bar | tee SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opal-bars
+          path: |
+            Opal.bar
+            Opal-sim.bar
+            SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write           # create the release
+      id-token: write           # Sigstore signing for the attestation
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: opal-bars
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            Opal.bar
+            Opal-sim.bar
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" Opal.bar Opal-sim.bar SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --title "Opal ${TAG#v}" --verify-tag \
+            --notes "Built by GitHub Actions from commit $GITHUB_SHA, in the bb10-sdk image pinned in .github/workflows/release.yml at this tag. To verify it, see README.md."

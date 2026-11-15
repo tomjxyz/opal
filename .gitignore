@@ -1,0 +1,6 @@
+# build outputs
+/arm/
+/x86/
+*.bar
+*.o
+assets/.assets.index
